@@ -34,17 +34,16 @@ namespace EcoMarket.Models
         [BsonElement("updatedAt")]
         public DateTime UpdatedAt { get; set; } = DateTime.UtcNow;
 
-        // Static method to validate order statuses
         public static class StatusValidation
         {
             public static readonly ReadOnlyCollection<string> ValidStatuses = new ReadOnlyCollection<string>(new List<string>
             {
-                "Pending",     // Initial order state
-                "Processing",  // Order is being prepared
-                "Shipped",     // Order has been shipped
-                "Delivered",   // Order has been received by customer
-                "Cancelled",   // Order has been cancelled
-                "Refunded"     // Order has been refunded
+                "Pending",     
+                "Processing",  
+                "Shipped",     
+                "Delivered",   
+                "Cancelled",                  
+                "Refunded"
             });
 
             public static bool IsValidStatus(string status)
@@ -52,7 +51,6 @@ namespace EcoMarket.Models
                 return ValidStatuses.Contains(status, StringComparer.OrdinalIgnoreCase);
             }
 
-            // Define valid status transitions
             public static bool IsValidStatusTransition(string currentStatus, string newStatus)
             {
                 return newStatus switch
