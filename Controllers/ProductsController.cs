@@ -73,7 +73,6 @@ namespace EcoMarket.Controllers
             if (userId == null)
                 return Unauthorized();
 
-            // Ensure the seller can only set their own sellerId
             if (User.IsInRole("seller") && product.SellerId != userId)
                 return Forbid();
 
@@ -89,24 +88,20 @@ namespace EcoMarket.Controllers
             if (userId == null)
                 return Unauthorized();
 
-            // Check if the product exists and belongs to the seller
             var existingProduct = await _productService.GetProductById(id);
             if (existingProduct == null)
                 return NotFound();
 
-            // Debug logging
             Console.WriteLine($"Current User ID: {userId}");
             Console.WriteLine($"Current User Roles: {string.Join(", ", User.Claims.Where(c => c.Type == ClaimTypes.Role).Select(c => c.Value))}");
             Console.WriteLine($"Existing Product Seller ID: {existingProduct.SellerId}");
 
-            // Ensure sellers can only update their own products
             if (User.IsInRole("seller") && existingProduct.SellerId != userId)
             {
                 Console.WriteLine($"Update forbidden. Seller {userId} trying to update product owned by {existingProduct.SellerId}");
                 return Forbid();
             }
 
-            // Use the route ID for updating
             product.Id = id;
 
             var updatedProduct = await _productService.UpdateProduct(id, product);
@@ -121,12 +116,10 @@ namespace EcoMarket.Controllers
             if (userId == null)
                 return Unauthorized();
 
-            // Check if the product exists and belongs to the seller
             var existingProduct = await _productService.GetProductById(id);
             if (existingProduct == null)
                 return NotFound();
 
-            // Ensure sellers can only delete their own products
             if (User.IsInRole("seller") && existingProduct.SellerId != userId)
                 return Forbid();
 

@@ -59,7 +59,6 @@ namespace EcoMarket.Services
 
         public async Task<(Review Review, string ErrorMessage)> CreateReview(Review review, string userId)
         {
-            // Comprehensive input validation
             if (review == null)
                 return (new Review 
                 { 
@@ -69,7 +68,6 @@ namespace EcoMarket.Services
                     Comment = string.Empty 
                 }, "Review cannot be null");
 
-            // Validate UserId
             if (string.IsNullOrWhiteSpace(userId))
                 return (new Review 
                 { 
@@ -79,7 +77,6 @@ namespace EcoMarket.Services
                     Comment = review.Comment 
                 }, "User ID is required");
 
-            // Validate ProductId
             if (string.IsNullOrWhiteSpace(review.ProductId))
                 return (new Review 
                 { 
@@ -89,7 +86,6 @@ namespace EcoMarket.Services
                     Comment = review.Comment 
                 }, "Product ID is required");
 
-            // Validate Comment
             if (string.IsNullOrWhiteSpace(review.Comment))
                 return (new Review 
                 { 
@@ -103,7 +99,6 @@ namespace EcoMarket.Services
             // Console.WriteLine($"Review Details: ProductId: {review.ProductId}, Rating: {review.Rating}, Comment: {review.Comment}");
             // Console.WriteLine($"Review Images: {string.Join(", ", review.Images ?? new List<string>())}");
 
-            // Verify user exists
             var user = await _mongoDBService.Users.Find(u => u.Id == userId).FirstOrDefaultAsync();
             if (user == null)
             {
@@ -117,7 +112,6 @@ namespace EcoMarket.Services
                 }, "User not found");
             }
 
-            // Validate product exists
             var product = await _mongoDBService.Products.Find(p => p.Id == review.ProductId).FirstOrDefaultAsync();
             if (product == null)
             {
@@ -131,7 +125,6 @@ namespace EcoMarket.Services
                 }, "Product not found");
             }
 
-            // Validate rating is between 1 and 5
             if (review.Rating < 1 || review.Rating > 5)
             {
                 Console.WriteLine($"Invalid rating: {review.Rating}");
@@ -144,7 +137,6 @@ namespace EcoMarket.Services
                 }, "Rating must be between 1 and 5");
             }
 
-            // Check if user has already reviewed this product
             var existingReview = await _mongoDBService.Reviews
                 .Find(r => r.UserId == userId && r.ProductId == review.ProductId)
                 .FirstOrDefaultAsync();
@@ -161,8 +153,7 @@ namespace EcoMarket.Services
                 }, "You have already reviewed this product");
             }
 
-            // Set review metadata
-            review.Id = null; // Ensure MongoDB generates a new ID
+            review.Id = null;
             review.UserId = userId;
             review.CreatedAt = DateTime.UtcNow;
             review.UpdatedAt = DateTime.UtcNow;
@@ -172,7 +163,6 @@ namespace EcoMarket.Services
                 await _mongoDBService.Reviews.InsertOneAsync(review);
                 Console.WriteLine($"Review created successfully: {review.Id}");
 
-                // Update product rating
                 await UpdateProductRating(review.ProductId);
 
                 return (review, string.Empty);
@@ -199,13 +189,12 @@ namespace EcoMarket.Services
             if (existingReview.UserId != userId)
                 return (false, "You can only update your own reviews");
 
-            // Validate rating is between 1 and 5
             if (updatedReview.Rating < 1 || updatedReview.Rating > 5)
                 return (false, "Rating must be between 1 and 5");
 
             updatedReview.Id = id;
             updatedReview.UserId = userId;
-            updatedReview.ProductId = existingReview.ProductId; // Don't allow changing product
+            updatedReview.ProductId = existingReview.ProductId;
             updatedReview.CreatedAt = existingReview.CreatedAt;
             updatedReview.UpdatedAt = DateTime.UtcNow;
 
@@ -213,7 +202,6 @@ namespace EcoMarket.Services
             if (result.ModifiedCount == 0)
                 return (false, "Failed to update review");
 
-            // Update product rating
             await UpdateProductRating(updatedReview.ProductId);
 
             return (true, string.Empty);
@@ -232,7 +220,6 @@ namespace EcoMarket.Services
             if (result.DeletedCount == 0)
                 return (false, "Failed to delete review");
 
-            // Update product rating
             await UpdateProductRating(review.ProductId);
 
             return (true, string.Empty);
