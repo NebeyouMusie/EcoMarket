@@ -56,7 +56,6 @@ namespace EcoMarket.Controllers
         [HttpPost]
         public async Task<IActionResult> CreateReview([FromBody] Review review)
         {
-            // Validate input model
             if (!ModelState.IsValid)
             {
                 var errors = ModelState.Values
