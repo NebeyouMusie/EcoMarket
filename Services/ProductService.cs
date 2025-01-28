@@ -115,6 +115,13 @@ namespace EcoMarket.Services
             return CreatePaginatedResponse(products, totalItems, validPageNumber, validPageSize);
         }
 
+        public async Task<List<Product>> GetProductsByUserIdAsync(string userId)
+        {
+            return await _mongoDBService.Products
+                .Find(p => p.CreatedById == userId)
+                .ToListAsync();
+        }
+
         private PaginatedResponse<Product> CreatePaginatedResponse(List<Product> items, long totalItems, int pageNumber, int pageSize)
         {
             return new PaginatedResponse<Product>
