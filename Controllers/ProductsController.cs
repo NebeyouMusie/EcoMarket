@@ -65,6 +65,26 @@ namespace EcoMarket.Controllers
             return Ok(response);
         }
 
+        [HttpGet("user/{userId}")]
+        public async Task<ActionResult<List<Product>>> GetUserProducts(string userId)
+        {
+            try
+            {
+                var currentUserId = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+                if (currentUserId != userId && !User.IsInRole("Admin"))
+                {
+                    return Forbid();
+                }
+
+                var products = await _productService.GetProductsByUserIdAsync(userId);
+                return Ok(products);
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(500, $"Internal server error: {ex.Message}");
+            }
+        }
+
         [Authorize(Roles = "admin,seller")]
         [HttpPost]
         public async Task<IActionResult> CreateProduct([FromBody] Product product)
