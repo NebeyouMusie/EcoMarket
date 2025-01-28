@@ -2,10 +2,8 @@ using System;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Authorization;
-using MongoDB.Driver;
 using EcoMarket.Models;
 using EcoMarket.Services;
-using BC = BCrypt.Net.BCrypt;
 
 namespace EcoMarket.Controllers
 {
@@ -13,50 +11,34 @@ namespace EcoMarket.Controllers
     [Route("api/[controller]")]
     public class AuthController : ControllerBase
     {
-        private readonly MongoDBService _mongoDBService;
-        private readonly JwtService _jwtService;
+        private readonly AuthService _authService;
 
-        public AuthController(MongoDBService mongoDBService, JwtService jwtService)
+        public AuthController(AuthService authService)
         {
-            _mongoDBService = mongoDBService;
-            _jwtService = jwtService;
+            _authService = authService;
         }
 
         [AllowAnonymous]
         [HttpPost("register")]
         public async Task<IActionResult> Register([FromBody] User user)
         {
-            if (string.IsNullOrEmpty(user.Email) || string.IsNullOrEmpty(user.Password))
-                return BadRequest("Email and password are required");
+            var (registeredUser, token, message, success) = await _authService.Register(user);
 
-            var existingUser = await _mongoDBService.Users
-                .Find(u => u.Email == user.Email)
-                .FirstOrDefaultAsync();
-
-            if (existingUser != null)
-                return BadRequest("User with this email already exists");
-
-            user.Password = BC.HashPassword(user.Password);
-            user.Role ??= "user"; // Default role if not specified
-            user.CreatedAt = DateTime.UtcNow;
-            user.LastLoginAt = DateTime.UtcNow;
-
-            await _mongoDBService.Users.InsertOneAsync(user);
-
-            var token = _jwtService.GenerateToken(user);
+            if (!success)
+                return BadRequest(message);
 
             return Ok(new { 
-                Message = "Registration successful. Use this token for authenticated requests.",
+                Message = message,
                 Token = token, 
                 User = new {
-                    user.Id,
-                    user.Name,
-                    user.Email,
-                    user.Role,
-                    user.Phone,
-                    user.Address,
-                    user.CreatedAt,
-                    user.LastLoginAt
+                    registeredUser.Id,
+                    registeredUser.Name,
+                    registeredUser.Email,
+                    registeredUser.Role,
+                    registeredUser.Phone,
+                    registeredUser.Address,
+                    registeredUser.CreatedAt,
+                    registeredUser.LastLoginAt
                 }
             });
         }
@@ -65,27 +47,13 @@ namespace EcoMarket.Controllers
         [HttpPost("login")]
         public async Task<IActionResult> Login([FromBody] LoginRequest request)
         {
-            if (string.IsNullOrEmpty(request.Email) || string.IsNullOrEmpty(request.Password))
-                return BadRequest("Email and password are required");
+            var (user, token, message, success) = await _authService.Login(request.Email, request.Password);
 
-            var user = await _mongoDBService.Users
-                .Find(u => u.Email == request.Email)
-                .FirstOrDefaultAsync();
-
-            if (user == null)
-                return Unauthorized("Invalid email or password");
-
-            if (!BC.Verify(request.Password, user.Password))
-                return Unauthorized("Invalid email or password");
-
-            var update = Builders<User>.Update.Set(u => u.LastLoginAt, DateTime.UtcNow);
-            await _mongoDBService.Users.UpdateOneAsync(u => u.Id == user.Id, update);
-            user.LastLoginAt = DateTime.UtcNow;
-
-            var token = _jwtService.GenerateToken(user);
+            if (!success)
+                return Unauthorized(message);
 
             return Ok(new { 
-                Message = "Login successful. Use this token for authenticated requests.",
+                Message = message,
                 Token = token, 
                 User = new {
                     user.Id,
@@ -108,7 +76,7 @@ namespace EcoMarket.Controllers
             if (userId == null)
                 return Unauthorized();
 
-            var user = await _mongoDBService.Users.Find(u => u.Id == userId).FirstOrDefaultAsync();
+            var user = await _authService.GetUserById(userId);
             if (user == null)
                 return NotFound();
 
