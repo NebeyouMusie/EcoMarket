@@ -45,6 +45,10 @@ namespace EcoMarket.Models
         [BsonElement("createdAt")]
         public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
 
+        [BsonElement("createdById")]
+        [BsonRepresentation(BsonType.ObjectId)]
+        public string? CreatedById { get; set; }
+
         [BsonElement("updatedAt")]
         public DateTime UpdatedAt { get; set; } = DateTime.UtcNow;
 
