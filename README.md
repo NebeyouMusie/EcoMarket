@@ -145,6 +145,12 @@ Authorization: Bearer your_jwt_token
 ```
 Response: Returns success message
 
+#### 4. Get Products by User ID
+```http
+GET /api/products/user/{userId}
+```
+Response: Returns products created by the specified user
+
 ### Product Endpoints
 
 #### 1. List All Products (Paginated)
@@ -184,15 +190,17 @@ Authorization: Bearer your_jwt_token
 Content-Type: application/json
 
 {
-    "name": "Eco Water Bottle",
-    "description": "Reusable water bottle made from recycled materials",
+    "name": "Reusable Bottle 3",
+    "description": "Reusable bottle",
+    "price": 10,
     "category": "Household",
-    "price": 19.99,
-    "imageUrl": "https://example.com/bottle.jpg",
+    "sellerId": "6798b3149421fcd7b4b427a7",
+    "CreatedById" : "6798b3149421fcd7b4b427a7",
+    "imageUrl": "https://example.com/reusable.jpg",
     "stockQuantity": 100,
     "isEcoFriendly": true,
     "ecoFeatures": ["Reusable", "BPA-free", "Recyclable"],
-    "ecoCertifications": ["GreenSeal"]
+    "ecoCertifications": []
 }
 ```
 Response: Returns created product details
